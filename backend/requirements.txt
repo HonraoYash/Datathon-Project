@@ -1,0 +1,23 @@
+# Core Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-dotenv==1.0.1
+
+# Database
+sqlalchemy==2.0.36
+alembic==1.13.3
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+
+# LangChain Ecosystem - Compatible versions
+langchain==0.3.15
+langchain-core==0.3.31
+langchain-community==0.3.14
+langgraph==0.2.60
+langchain-ollama==0.2.1
+
+# Additional Dependencies
+pydantic==2.10.4
+pydantic-settings==2.7.0
+httpx==0.28.1
+
