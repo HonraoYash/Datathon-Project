@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import type { Agent, Tool, ChatMessage, ChatResponse } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
 const api = axios.create({
@@ -137,6 +137,26 @@ export const chatAPI = {
         }
       }
     }
+  },
+};
+
+// OCR API for PDF upload
+export const ocrAPI = {
+  uploadPDF: async (file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch(`${API_BASE_URL}/ocr/`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Failed to upload PDF' }));
+      throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
   },
 };
 

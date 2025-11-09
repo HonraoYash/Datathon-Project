@@ -3,7 +3,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base, get_db
-from app.api import agents, tools, chat, models
+from app.api import agents, tools, chat, models, ocr
 from app.api.websocket import websocket_endpoint
 
 # Create database tables
@@ -20,10 +20,11 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
+        "http://localhost:5174",  # alternate dev port
+        "http://localhost:5175", 
+        "http://localhost:5176",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -36,6 +37,7 @@ app.include_router(agents.router, prefix=settings.API_V1_PREFIX)
 app.include_router(tools.router, prefix=settings.API_V1_PREFIX)
 app.include_router(chat.router, prefix=settings.API_V1_PREFIX)
 app.include_router(models.router, prefix=settings.API_V1_PREFIX)
+app.include_router(ocr.router, prefix=settings.API_V1_PREFIX)
 
 # WebSocket endpoint
 @app.websocket("/ws/chat")
@@ -63,4 +65,3 @@ async def root():
 async def health():
     """Health check endpoint."""
     return {"status": "healthy"}
-

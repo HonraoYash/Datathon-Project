@@ -40,32 +40,38 @@ const CreateAgent: React.FC<CreateAgentProps> = ({ onAgentCreated }) => {
     loadAgents();
   }, []);
 
-  // Ensure selectedModel is set when models are loaded
+  // Auto-select first model when models are loaded (only if no agent selected and no model selected)
   useEffect(() => {
-    if (models.length > 0 && !selectedModel && !loading && !currentAgent) {
+    if (models.length > 0 && !currentAgent && !selectedModel) {
       console.log('Auto-selecting first model:', models[0].id);
       setSelectedModel(models[0].id);
     }
-  }, [models, loading]);
+  }, [models, currentAgent]); // Removed selectedModel from dependencies to avoid loops
 
   const loadModels = async () => {
     try {
+      setLoading(true);
       const response = await modelsAPI.getAvailable();
       const data = response.data;
       const modelsList = data.models || [];
       console.log('Models loaded:', modelsList);
-      setModels(modelsList);
-      // Always set selectedModel if not set and models exist (and no current agent)
-      if (modelsList.length > 0 && !currentAgent) {
-        // Use functional update to ensure we're checking the latest state
-        setSelectedModel(prev => {
-          if (!prev && modelsList.length > 0) {
-            console.log('Setting default model:', modelsList[0].id);
-            return modelsList[0].id;
-          }
-          return prev;
-        });
+      
+      if (modelsList.length === 0) {
+        // Use fallback models
+        const fallbackModels = [
+          { id: 'llama3.2', name: 'Llama 3.2', provider: 'Ollama' },
+          { id: 'claude-sonnet-3.5', name: 'Claude Sonnet 3.5', provider: 'Anthropic' },
+          { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI' },
+        ];
+        console.log('No models from API, using fallback models:', fallbackModels);
+        setModels(fallbackModels);
+        // The useEffect will handle setting the default model
+        return;
       }
+      
+      setModels(modelsList);
+      // The useEffect will handle auto-selecting the first model
+      
     } catch (error) {
       console.error('Error loading models:', error);
       // Fallback models
@@ -74,17 +80,9 @@ const CreateAgent: React.FC<CreateAgentProps> = ({ onAgentCreated }) => {
         { id: 'claude-sonnet-3.5', name: 'Claude Sonnet 3.5', provider: 'Anthropic' },
         { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI' },
       ];
-      console.log('Using fallback models:', fallbackModels);
+      console.log('Error loading models, using fallback models:', fallbackModels);
       setModels(fallbackModels);
-      if (!currentAgent) {
-        setSelectedModel(prev => {
-          if (!prev) {
-            console.log('Setting fallback model: llama3.2');
-            return 'llama3.2';
-          }
-          return prev;
-        });
-      }
+      // The useEffect will handle setting the default model
     } finally {
       setLoading(false);
     }
@@ -115,18 +113,23 @@ const CreateAgent: React.FC<CreateAgentProps> = ({ onAgentCreated }) => {
     if (agent) {
       setCurrentAgent(agent);
       setAgentName(agent.name);
-      setSelectedModel(agent.model);
+      setSelectedModel(agent.model || '');
       setSystemPrompt(agent.system_prompt || '');
       
       // Load connected tools for this agent
       loadAgentTools(agent.id);
     } else {
-      // New agent
+      // New agent - reset all fields
       setCurrentAgent(null);
       setAgentName('');
-      setSelectedModel(models.length > 0 ? models[0].id : '');
       setSystemPrompt('');
       setSelectedTools([]);
+      // Set to first available model, or empty if models not loaded yet
+      if (models.length > 0) {
+        setSelectedModel(models[0].id);
+      } else {
+        setSelectedModel('');
+      }
     }
   };
 
@@ -500,23 +503,35 @@ const CreateAgent: React.FC<CreateAgentProps> = ({ onAgentCreated }) => {
                 Select Model
               </label>
               <select
-                value={selectedModel}
+                value={selectedModel || ''}
                 onChange={(e) => {
-                  console.log('Model selected:', e.target.value);
-                  setSelectedModel(e.target.value);
+                  const newValue = e.target.value;
+                  console.log('Model selected:', newValue);
+                  if (newValue) {
+                    setSelectedModel(newValue);
+                  }
                 }}
-                disabled={loading}
-                className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                disabled={loading || models.length === 0}
+                className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">-- Select a model --</option>
-                {models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name} ({model.provider})
-                  </option>
-                ))}
+                {models.length === 0 ? (
+                  <option value="">{loading ? 'Loading models...' : 'No models available'}</option>
+                ) : (
+                  <>
+                    <option value="">-- Select a model --</option>
+                    {models.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name} ({model.provider})
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
               {selectedModel && (
                 <p className="text-xs text-gray-400 mt-1">Selected: {selectedModel}</p>
+              )}
+              {!selectedModel && models.length > 0 && !loading && (
+                <p className="text-xs text-yellow-400 mt-1">Please select a model</p>
               )}
             </div>
 

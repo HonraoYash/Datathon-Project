@@ -10,6 +10,7 @@ UI/UX - very less weightage (10%)
 
 
 
+
 Agent - Classifier (uses Reasoning and based on the Prompt) multiple iteratinos of Reasoning - 
 
 Tree of Thought - the main Reasoning process 

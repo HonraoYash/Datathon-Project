@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
     
+    # Databricks
+    DATABRICKS_URL: Optional[str] = None
+    DATABRICKS_TOKEN: Optional[str] = None
+    DATABRICKS_NOTEBOOK_PATH: Optional[str] = None
+    DATABRICKS_VOLUME_PATH: Optional[str] = None
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

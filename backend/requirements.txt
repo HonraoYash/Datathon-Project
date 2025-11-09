@@ -20,4 +20,6 @@ langchain-ollama==0.2.1
 pydantic==2.10.4
 pydantic-settings==2.7.0
 httpx==0.28.1
+requests==2.31.0
+python-multipart==0.0.9
 
